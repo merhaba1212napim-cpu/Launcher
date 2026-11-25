@@ -6,6 +6,9 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,14 +18,26 @@ jobs:
         with:
           submodules: recursive
 
-      - name: LTW ve ANGLE Kutuphanelerini Enjekte Et
+      - name: JRE 8, 17, 21 ve Renderer Kutuphanelerini Enjekte Et
         run: |
           mkdir -p app_pojavlauncher/src/main/jniLibs/arm64-v8a /tmp/libs
+          mkdir -p app_pojavlauncher/src/main/assets/components/jre
+          mkdir -p app_pojavlauncher/src/main/assets/components/jre-new
+          mkdir -p app_pojavlauncher/src/main/assets/components/jre-21
+
           curl -L -s -o /tmp/libs/pojav.apk "https://github.com" || true
           if [ -s /tmp/libs/pojav.apk ]; then
             unzip -q -j /tmp/libs/pojav.apk "lib/arm64-v8a/*ltw*.so" "lib/arm64-v8a/*angle*.so" -d app_pojavlauncher/src/main/jniLibs/arm64-v8a/ 2>/dev/null || true
+            unzip -q -j /tmp/libs/pojav.apk "assets/components/jre/*" -d app_pojavlauncher/src/main/assets/components/jre/ 2>/dev/null || true
+            unzip -q -j /tmp/libs/pojav.apk "assets/components/jre-new/*" -d app_pojavlauncher/src/main/assets/components/jre-new/ 2>/dev/null || true
           fi
-          
+
+          JRE21_URL=$(curl -s "https://github.com" | grep -oE 'https://[^"]+jre21[^"]+arm64[^"]+\.tar\.xz' | head -n 1)
+          if [ -n "$JRE21_URL" ]; then
+            curl -L -s -o app_pojavlauncher/src/main/assets/components/jre-21/universal.tar.xz "$JRE21_URL"
+            date +%s > app_pojavlauncher/src/main/assets/components/jre-21/version
+          fi
+
           python3 -c '
           import glob
           jre_file = "app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/utils/JREUtils.java"
@@ -65,8 +80,9 @@ jobs:
       - name: APK Derle
         run: ./gradlew :app_pojavlauncher:assembleDebug
 
-      - name: APK Yukle
-        uses: actions/upload-artifact@v4
+      - name: Releases Bolumune Otomatik Yukle
+        uses: softprops/action-gh-release@v2
         with:
-          name: PojavLauncher-Custom-APK
-          path: app_pojavlauncher/build/outputs/apk/debug/*.apk
+          tag_name: v1.0-${{ github.run_number }}
+          name: PojavLauncher Custom v1.0-${{ github.run_number }}
+          files: app_pojavlauncher/build/outputs/apk/debug/*.apk
