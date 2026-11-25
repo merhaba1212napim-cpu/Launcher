@@ -15,6 +15,38 @@ jobs:
         with:
           submodules: recursive
 
+      - name: LTW ve ANGLE Kutuphanelerini Enjekte Et
+        run: |
+          mkdir -p app_pojavlauncher/src/main/jniLibs/arm64-v8a /tmp/libs
+          curl -L -s -o /tmp/libs/pojav.apk "https://github.com" || true
+          if [ -s /tmp/libs/pojav.apk ]; then
+            unzip -q -j /tmp/libs/pojav.apk "lib/arm64-v8a/*ltw*.so" "lib/arm64-v8a/*angle*.so" -d app_pojavlauncher/src/main/jniLibs/arm64-v8a/ 2>/dev/null || true
+          fi
+          
+          python3 -c '
+          import glob
+          jre_file = "app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/utils/JREUtils.java"
+          with open(jre_file, "r", encoding="utf-8") as f:
+              code = f.read()
+          if "opengles3_ltw" not in code:
+              target = "case \"vulkan_zink\": renderLibrary = \"libOSMesa.so\"; break;"
+              add = target + "\n            case \"opengles3_ltw\": renderLibrary = \"libltw.so\"; break;\n            case \"opengles_angle\": renderLibrary = \"libEGL_angle.so\"; break;"
+              code = code.replace(target, add)
+              with open(jre_file, "w", encoding="utf-8") as f:
+                  f.write(code)
+          for xml in glob.glob("app_pojavlauncher/src/main/res/values*/*.xml"):
+              with open(xml, "r", encoding="utf-8") as f:
+                  x = f.read()
+              if "<item>vulkan_zink</item>" in x and "opengles3_ltw" not in x:
+                  x = x.replace("<item>vulkan_zink</item>", "<item>vulkan_zink</item>\n        <item>opengles3_ltw</item>\n        <item>opengles_angle</item>")
+                  with open(xml, "w", encoding="utf-8") as f:
+                      f.write(x)
+              if "<string name=\"mcl_setting_renderer_vulkan_zink\">" in x and "mcl_setting_renderer_opengles3_ltw" not in x:
+                  x = x.replace("<string name=\"mcl_setting_renderer_vulkan_zink\">", "<string name=\"mcl_setting_renderer_opengles3_ltw\">LTW (1.17+ / Sodium)</string>\n    <string name=\"mcl_setting_renderer_opengles_angle\">ANGLE (Vulkan)</string>\n    <string name=\"mcl_setting_renderer_vulkan_zink\">")
+                  with open(xml, "w", encoding="utf-8") as f:
+                      f.write(x)
+          '
+
       - name: Java 8 Kur
         uses: actions/setup-java@v4
         with:
