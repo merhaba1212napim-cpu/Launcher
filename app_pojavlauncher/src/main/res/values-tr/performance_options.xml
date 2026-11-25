@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="preference_target_fps_title">Kare hızı sınırı</string>
+    <string name="preference_show_fps_title">FPS sayacını göster</string>
+    <string name="preference_show_fps_description">Oyunun gerçek kare hızını ekranın üstünde gösterir. Ayarları kendi cihazında karşılaştırmak için kullanışlıdır.</string>
+    <string name="preference_jvm_preset_title">JVM ayar profili (sonraki açılışta geçerli)</string>
+    <string name="preference_adaptive_fps_title">Uyarlanabilir FPS sınırı (pil/ısı)</string>
+    <string name="preference_adaptive_fps_description">Pil azalınca veya telefon aşırı ısınınca kare hızını otomatik düşürür. Kendi seçtiğin sınırı asla gevşetmez.</string>
+    <string name="preference_device_compat_title">Cihaz ve uyumluluk bilgisi</string>
+
+    <string-array name="target_fps_entries">
+        <item>Sınırsız</item>
+        <item>Otomatik (ekranla eşleştir)</item>
+        <item>30 FPS</item>
+        <item>45 FPS</item>
+        <item>60 FPS</item>
+        <item>90 FPS</item>
+        <item>120 FPS</item>
+    </string-array>
+
+    <string-array name="jvm_preset_entries">
+        <item>Varsayılan (önerilen)</item>
+        <item>Akıcı (G1, kısa GC duraklamaları)</item>
+        <item>Düşük bellekli cihazlar (seri GC)</item>
+    </string-array>
+</resources>

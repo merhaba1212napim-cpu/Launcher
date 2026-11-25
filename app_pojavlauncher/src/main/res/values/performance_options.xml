@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="preference_target_fps_title">Frame rate limit</string>
+    <string name="preference_show_fps_title">Show FPS counter</string>
+    <string name="preference_show_fps_description">Shows the game\'s real frame rate at the top of the screen. Handy for comparing settings on your device.</string>
+    <string name="preference_jvm_preset_title">JVM tuning preset (applies on next launch)</string>
+    <string name="preference_adaptive_fps_title">Adaptive FPS cap (battery/thermal)</string>
+    <string name="preference_adaptive_fps_description">Lowers the frame rate automatically on low battery or heavy heat throttling. Never raises your own chosen cap.</string>
+    <string name="preference_device_compat_title">Device &amp; compatibility info</string>
+
+    <string-array name="target_fps_entries">
+        <item>No limit</item>
+        <item>Auto (match display)</item>
+        <item>30 FPS</item>
+        <item>45 FPS</item>
+        <item>60 FPS</item>
+        <item>90 FPS</item>
+        <item>120 FPS</item>
+    </string-array>
+    <string-array name="target_fps_values" translatable="false">
+        <item>0</item>
+        <item>-1</item>
+        <item>30</item>
+        <item>45</item>
+        <item>60</item>
+        <item>90</item>
+        <item>120</item>
+    </string-array>
+
+    <string-array name="jvm_preset_entries">
+        <item>Default (recommended)</item>
+        <item>Smooth (G1, short GC pauses)</item>
+        <item>Low memory devices (serial GC)</item>
+    </string-array>
+    <string-array name="jvm_preset_values" translatable="false">
+        <item>default</item>
+        <item>smooth</item>
+        <item>lowmem</item>
+    </string-array>
+</resources>
