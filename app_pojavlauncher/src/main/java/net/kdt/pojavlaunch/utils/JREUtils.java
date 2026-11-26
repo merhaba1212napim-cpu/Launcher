@@ -214,9 +214,19 @@ public class JREUtils {
 
         if(LOCAL_RENDERER != null) {
             envMap.put("POJAV_RENDERER", LOCAL_RENDERER);
+            if(LOCAL_RENDERER.equals("opengles3_ltw_custom")) {
+                envMap.put("LIBGL_ES", "3");
+                envMap.put("POJAVEXEC_EGL", "libltw_custom.so");
+            }
             if(LOCAL_RENDERER.equals("opengles3_ltw")) {
                 envMap.put("LIBGL_ES", "3");
-                envMap.put("POJAVEXEC_EGL","libltw.so"); // Use ANGLE EGL
+                envMap.put("POJAVEXEC_EGL","libltw.so");
+                // Experimental: ANGLE as the EGL layer under LTW. Only when the option is on, the bundled
+                // ANGLE library exists, and the device runs Android 8.0+ (ANGLE needs libnativewindow.so).
+                if(LauncherPreferences.PREF_ANGLE_EGL && android.os.Build.VERSION.SDK_INT >= 26
+                        && new File(NATIVE_LIB_DIR, "libEGL_angle.so").exists()) {
+                    envMap.put("POJAVEXEC_EGL", NATIVE_LIB_DIR + "/libEGL_angle.so");
+                }
             }
         }
         if(LauncherPreferences.PREF_BIG_CORE_AFFINITY) envMap.put("POJAV_BIG_CORE_AFFINITY", "1");
@@ -490,6 +500,7 @@ public class JREUtils {
                 renderLibrary = "libgl4es_114.so"; break;
             case "vulkan_zink": renderLibrary = "libOSMesa.so"; break;
             case "opengles3_ltw" : renderLibrary = "libltw.so"; break;
+            case "opengles3_ltw_custom": renderLibrary = "libltw_custom.so"; break;
             default:
                 Log.w("RENDER_LIBRARY", "No renderer selected, defaulting to opengles2");
                 renderLibrary = "libgl4es_114.so";

@@ -241,7 +241,7 @@ public final class Tools {
     }
 
     private static boolean checkRenderDistance(File gamedir) {
-        if(!"opengles3_ltw".equals(Tools.LOCAL_RENDERER)) return false;
+        if(Tools.LOCAL_RENDERER == null || !Tools.LOCAL_RENDERER.startsWith("opengles3_ltw")) return false;
         if(!affectedByRenderDistanceIssue()) return false;
         if(hasSodium(gamedir)) return false;
 
@@ -1380,13 +1380,16 @@ public final class Tools {
         boolean deviceHasOpenGLES3 = JREUtils.getDetectedVersion() >= 3;
         // LTW is an optional proprietary dependency
         boolean appHasLtw = new File(Tools.NATIVE_LIB_DIR, "libltw.so").exists();
+        boolean appHasCustomLtw = new File(Tools.NATIVE_LIB_DIR, "libltw_custom.so").exists();
         List<String> rendererIds = new ArrayList<>(defaultRenderers.length);
         List<String> rendererNames = new ArrayList<>(defaultRendererNames.length);
         for(int i = 0; i < defaultRenderers.length; i++) {
             String rendererId = defaultRenderers[i];
             if(rendererId.contains("vulkan") && !deviceHasVulkan) continue;
             if(rendererId.contains("zink") && !deviceHasZinkBinary) continue;
-            if(rendererId.contains("ltw") && (!deviceHasOpenGLES3 || !appHasLtw)) continue;
+            if(rendererId.contains("ltw") && !deviceHasOpenGLES3) continue;
+            if(rendererId.equals("opengles3_ltw") && !appHasLtw) continue;
+            if(rendererId.equals("opengles3_ltw_custom") && !appHasCustomLtw) continue;
             rendererIds.add(rendererId);
             rendererNames.add(defaultRendererNames[i]);
         }

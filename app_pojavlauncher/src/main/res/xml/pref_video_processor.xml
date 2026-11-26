@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app2="http://schemas.android.com/apk/res-auto">
+
+    <net.kdt.pojavlaunch.prefs.BackButtonPreference/>
+
+    <PreferenceCategory android:title="@string/video_processor_title" >
+        <androidx.preference.ListPreference
+            android:title="@string/mcl_setting_category_renderer"
+            android:key="renderer"
+            android:defaultValue="opengles2"
+            android:icon="@drawable/ic_setting_engine"
+            app2:useSimpleSummaryProvider="true"/>
+
+        <androidx.preference.ListPreference
+            android:key="upscalePreset"
+            android:title="@string/upscale_preset_title"
+            android:summary="@string/upscale_preset_summary"
+            android:entries="@array/upscale_preset_entries"
+            android:entryValues="@array/upscale_preset_values"
+            android:defaultValue="100"
+            android:icon="@drawable/ic_setting_screen_resolution"
+            app2:useSimpleSummaryProvider="true"/>
+
+        <net.kdt.pojavlaunch.prefs.CustomSeekBarPreference
+            android:key="resolutionRatio"
+            android:summary="@string/mcl_setting_subtitle_resolution_scaler"
+            android:title="@string/mcl_setting_title_resolution_scaler"
+            app2:showSeekBarValue="true"
+            app2:selectable="false"
+            app2:min="@integer/resolution_seekbar_min"
+            app2:seekBarIncrement="@integer/resolution_seekbar_increment"
+            android:icon="@drawable/ic_setting_screen_resolution"
+            />
+    </PreferenceCategory>
+</PreferenceScreen>

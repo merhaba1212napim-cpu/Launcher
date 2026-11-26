@@ -66,6 +66,7 @@ import net.kdt.pojavlaunch.services.GameService;
 import net.kdt.pojavlaunch.utils.AdaptiveFpsController;
 import net.kdt.pojavlaunch.utils.FpsOverlay;
 import net.kdt.pojavlaunch.utils.JREUtils;
+import net.kdt.pojavlaunch.utils.McVersionUtils;
 import net.kdt.pojavlaunch.utils.MCOptionUtils;
 import net.kdt.pojavlaunch.value.MinecraftAccount;
 import net.kdt.pojavlaunch.value.launcherprofiles.LauncherProfiles;
@@ -361,10 +362,34 @@ public class MainActivity extends BaseActivity implements ControlButtonMenuListe
         }
     }
 
-    private void runCraft(String versionId, JMinecraftVersionList.Version version) throws Throwable {
-        if(Tools.LOCAL_RENDERER == null) {
-            Tools.LOCAL_RENDERER = LauncherPreferences.PREF_RENDERER;
+    /**
+     * Renderer for THIS launch: the profile's own renderer if it has one, else LTW for 1.17+ when the
+     * automatic option is on and LTW is usable, else the global setting. Reset on every launch, so an
+     * earlier LTW choice never leaks into an older version.
+     */
+    private String chooseRendererForLaunch(String versionId) {
+        if(Tools.isValidString(minecraftProfile.pojavRendererName)) return minecraftProfile.pojavRendererName;
+        if(LauncherPreferences.PREF_AUTO_LTW_117
+                && McVersionUtils.isAtLeast117(resolveBaseVersion(versionId))
+                && Tools.checkRendererCompatible(this, "opengles3_ltw")) {
+            return "opengles3_ltw";
         }
+        return LauncherPreferences.PREF_RENDERER;
+    }
+
+    /** The Minecraft version this folder really runs: the inherited base for mod loader installs, else its own name. */
+    private static String resolveBaseVersion(String versionId) {
+        try {
+            JMinecraftVersionList.Version raw = Tools.getVersionInfo(versionId, true);
+            if(raw != null && Tools.isValidString(raw.inheritsFrom)) return raw.inheritsFrom;
+        } catch (Exception e) {
+            Log.w("runCraft", "Could not read the local version file for " + versionId, e);
+        }
+        return versionId;
+    }
+
+    private void runCraft(String versionId, JMinecraftVersionList.Version version) throws Throwable {
+        Tools.LOCAL_RENDERER = chooseRendererForLaunch(versionId);
         if(!Tools.checkRendererCompatible(this, Tools.LOCAL_RENDERER)) {
             Tools.RenderersList renderersList = Tools.getCompatibleRenderers(this);
             String firstCompatibleRenderer = renderersList.rendererIds.get(0);

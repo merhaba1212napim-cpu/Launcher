@@ -77,6 +77,10 @@ public class LauncherPreferences {
     public static String PREF_JVM_PRESET = JvmPresets.PRESET_DEFAULT;
     /** Lower the FPS cap automatically on low battery or heavy thermal throttling (never raises the user's own cap) */
     public static boolean PREF_ADAPTIVE_FPS = false;
+    /** Use the LTW renderer automatically for Minecraft 1.17 and newer (decided per launch in MainActivity) */
+    public static boolean PREF_AUTO_LTW_117 = true;
+    /** Experimental: use the bundled ANGLE library as the EGL layer under LTW */
+    public static boolean PREF_ANGLE_EGL = false;
 
 
     public static void loadPreferences(Context ctx) {
@@ -122,6 +126,8 @@ public class LauncherPreferences {
         PREF_SHOW_FPS = DEFAULT_PREF.getBoolean("showFps", false);
         PREF_JVM_PRESET = DEFAULT_PREF.getString("jvmPreset", JvmPresets.PRESET_DEFAULT);
         PREF_ADAPTIVE_FPS = DEFAULT_PREF.getBoolean("adaptiveFps", false);
+        PREF_AUTO_LTW_117 = DEFAULT_PREF.getBoolean("autoLtw117", true);
+        PREF_ANGLE_EGL = DEFAULT_PREF.getBoolean("angleEglLtw", false);
         try {
             PREF_TARGET_FPS = Integer.parseInt(DEFAULT_PREF.getString("targetFps", "0"));
         } catch (NumberFormatException e) {

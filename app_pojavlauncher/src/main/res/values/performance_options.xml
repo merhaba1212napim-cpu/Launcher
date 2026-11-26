@@ -7,6 +7,10 @@
     <string name="preference_adaptive_fps_title">Adaptive FPS cap (battery/thermal)</string>
     <string name="preference_adaptive_fps_description">Lowers the frame rate automatically on low battery or heavy heat throttling. Never raises your own chosen cap.</string>
     <string name="preference_device_compat_title">Device &amp; compatibility info</string>
+    <string name="preference_auto_ltw_title">Use LTW automatically for 1.17+</string>
+    <string name="preference_auto_ltw_description">Versions 1.17 and newer start with the LTW renderer, decided from the version\'s own files. Turn off to use the renderer you picked.</string>
+    <string name="preference_angle_egl_title">ANGLE EGL under LTW (experimental)</string>
+    <string name="preference_angle_egl_description">Uses the bundled ANGLE library as the EGL layer under LTW. Not tested on most devices and may crash. Off by default. Android 8.0+ only.</string>
 
     <string-array name="target_fps_entries">
         <item>No limit</item>
@@ -36,5 +40,23 @@
         <item>default</item>
         <item>smooth</item>
         <item>lowmem</item>
+    </string-array>
+    <string name="video_processor_title">Video processor</string>
+    <string name="video_processor_summary">Renderer, image scaling and resolution</string>
+    <string name="upscale_preset_title">Image scaling preset</string>
+    <string name="upscale_preset_summary">Renders at a lower resolution and scales up. Lower = faster, higher = sharper.</string>
+    <string name="mcl_setting_renderer_ltw_custom">LTW (custom library) - 1.17+ only</string>
+
+    <string-array name="upscale_preset_entries">
+        <item>Performance (50%)</item>
+        <item>Balanced (67%)</item>
+        <item>Quality (80%)</item>
+        <item>Native (100%)</item>
+    </string-array>
+    <string-array name="upscale_preset_values" translatable="false">
+        <item>50</item>
+        <item>67</item>
+        <item>80</item>
+        <item>100</item>
     </string-array>
 </resources>

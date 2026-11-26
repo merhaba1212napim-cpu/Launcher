@@ -7,6 +7,10 @@
     <string name="preference_adaptive_fps_title">Uyarlanabilir FPS sınırı (pil/ısı)</string>
     <string name="preference_adaptive_fps_description">Pil azalınca veya telefon aşırı ısınınca kare hızını otomatik düşürür. Kendi seçtiğin sınırı asla gevşetmez.</string>
     <string name="preference_device_compat_title">Cihaz ve uyumluluk bilgisi</string>
+    <string name="preference_auto_ltw_title">1.17 ve üzeri için LTW otomatik</string>
+    <string name="preference_auto_ltw_description">1.17 ve üzeri sürümler, sürümün kendi dosyalarına bakılarak LTW renderer\'ıyla açılır. Kapatırsan seçtiğin renderer kullanılır.</string>
+    <string name="preference_angle_egl_title">LTW altında ANGLE EGL (deneysel)</string>
+    <string name="preference_angle_egl_description">LTW\'nin altında EGL katmanı olarak paketli ANGLE kütüphanesini kullanır. Çoğu cihazda test edilmedi, çökebilir. Varsayılan kapalı. Yalnızca Android 8.0 ve üzeri.</string>
 
     <string-array name="target_fps_entries">
         <item>Sınırsız</item>
@@ -22,5 +26,23 @@
         <item>Varsayılan (önerilen)</item>
         <item>Akıcı (G1, kısa GC duraklamaları)</item>
         <item>Düşük bellekli cihazlar (seri GC)</item>
+    </string-array>
+    <string name="video_processor_title">Video işleyici</string>
+    <string name="video_processor_summary">Renderer, görüntü ölçekleme ve çözünürlük</string>
+    <string name="upscale_preset_title">Görüntü ölçekleme profili</string>
+    <string name="upscale_preset_summary">Daha düşük çözünürlükte çizip büyütür. Düşük = daha hızlı, yüksek = daha keskin.</string>
+    <string name="mcl_setting_renderer_ltw_custom">LTW (özel kütüphane) - yalnızca 1.17+</string>
+
+    <string-array name="upscale_preset_entries">
+        <item>Performans (%50)</item>
+        <item>Dengeli (%67)</item>
+        <item>Kalite (%80)</item>
+        <item>Yerel (%100)</item>
+    </string-array>
+    <string-array name="upscale_preset_values" translatable="false">
+        <item>50</item>
+        <item>67</item>
+        <item>80</item>
+        <item>100</item>
     </string-array>
 </resources>

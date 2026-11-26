@@ -5,6 +5,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.preference.ListPreference;
@@ -17,6 +20,7 @@ import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.prefs.CustomSeekBarPreference;
 import net.kdt.pojavlaunch.multirt.MultiRTUtils;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
+import net.kdt.pojavlaunch.utils.GLInfoUtils;
 import net.kdt.pojavlaunch.utils.VersionCompatibilityPredictor;
 
 import java.util.Locale;
@@ -28,21 +32,8 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
     @Override
     public void onCreatePreferences(Bundle b, String str) {
         addPreferencesFromResource(R.xml.pref_video);
-        int resolution = (int) (LauncherPreferences.PREF_SCALE_FACTOR * 100);
-
         //Disable notch checking behavior on android 8.1 and below.
         requirePreference("ignoreNotch").setVisible(Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && LauncherPreferences.PREF_NOTCH_SIZE > 0);
-
-        CustomSeekBarPreference resolutionSeekbar = requirePreference("resolutionRatio",
-                CustomSeekBarPreference.class);
-        resolutionSeekbar.setSuffix(" %");
-
-        // #724 bug fix
-        if (resolution < 25) {
-            resolutionSeekbar.setValue(100);
-        } else {
-            resolutionSeekbar.setValue(resolution);
-        }
 
         // Sustained performance is only available since Nougat
         SwitchPreference sustainedPerfSwitch = requirePreference("sustainedPerformance",
@@ -53,17 +44,11 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
         requirePreference("alternate_surface", SwitchPreferenceCompat.class).setChecked(LauncherPreferences.PREF_USE_ALTERNATE_SURFACE);
         requirePreference("force_vsync", SwitchPreferenceCompat.class).setChecked(LauncherPreferences.PREF_FORCE_VSYNC);
 
-        ListPreference rendererListPreference = requirePreference("renderer",
-                ListPreference.class);
-        Tools.RenderersList renderersList = Tools.getCompatibleRenderers(getContext());
-        rendererListPreference.setEntries(renderersList.rendererDisplayNames);
-        rendererListPreference.setEntryValues(renderersList.rendererIds.toArray(new String[0]));
-
         computeVisibility();
         setupDeviceCompatInfo();
     }
 
-    /** Fills in the read-only "device & compatibility" preference; see VersionCompatibilityPredictor. */
+    /** Read-only device card: name, chip, memory, GPU and a rough version estimate (see VersionCompatibilityPredictor). */
     private void setupDeviceCompatInfo() {
         Preference infoPref = requirePreference("deviceCompatInfo");
         int cores = java.lang.Runtime.getRuntime().availableProcessors();
@@ -85,18 +70,42 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
         }
         VersionCompatibilityPredictor.Breakpoint best =
                 VersionCompatibilityPredictor.highestLikelyPlayable(maxJava, ramMb);
-
-        String ramText = ramMb > 0 ? (ramMb + " MB") : "bilinmiyor";
         String bestText = best != null ? best.label : "tespit edilemedi";
-        infoPref.setSummary(String.format(Locale.getDefault(),
-                "RAM: %s • %d çekirdek • %s\nTahmini üst sınır: %s (kesin değildir)",
-                ramText, cores, is64Bit ? "64-bit" : "32-bit", bestText));
+        String ramText = ramMb > 0 ? (ramMb + " MB") : "bilinmiyor";
+        String device = Build.MANUFACTURER + " " + Build.MODEL;
+        String chip = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !Build.UNKNOWN.equals(Build.SOC_MODEL))
+                ? Build.SOC_MODEL : Build.HARDWARE;
+
+        infoPref.setSummary(buildDeviceSummary(device, chip, ramText, cores, is64Bit, "ölçülüyor...", bestText));
         infoPref.setOnPreferenceClickListener(preference -> {
             Toast.makeText(getContext(),
                     "Bu kaba bir tahmindir; sürücü ve mod uyumluluğu hesaba katılmaz.",
                     Toast.LENGTH_LONG).show();
             return true;
         });
+
+        // The GPU name needs a GL context, which is created off the UI thread, then shown on it.
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+        new Thread(() -> {
+            String gpu;
+            try {
+                gpu = GLInfoUtils.getGlInfo().renderer;
+            } catch (Throwable t) {
+                Log.w("DeviceInfo", "Could not read the GPU name", t);
+                gpu = "bilinmiyor";
+            }
+            String finalGpu = (gpu == null || gpu.isEmpty()) ? "bilinmiyor" : gpu;
+            mainHandler.post(() -> infoPref.setSummary(buildDeviceSummary(device, chip, ramText, cores,
+                    is64Bit, finalGpu, bestText)));
+        }, "device-info-gpu").start();
+    }
+
+    private static String buildDeviceSummary(String device, String chip, String ramText, int cores,
+                                             boolean is64Bit, String gpu, String bestText) {
+        return String.format(Locale.getDefault(),
+                "Cihaz: %s • %s • Android %s\nRAM: %s • %d çekirdek • %s\nGPU: %s\nTahmini üst sınır: %s (kesin değildir)",
+                device, chip, Build.VERSION.RELEASE, ramText, cores,
+                is64Bit ? "64-bit" : "32-bit", gpu, bestText);
     }
 
     @Override
