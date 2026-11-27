@@ -66,6 +66,20 @@ jobs:
             "platforms;android-34" \
             "build-tools;34.0.0"
 
+      # LTW kütüphanesini indir
+      - name: LTW Kitapligini Indir
+        run: |
+          mkdir -p app_pojavlauncher/libs
+
+          curl -fL --retry 3 \
+            https://github.com/PojavLauncherTeam/LTW/releases/latest/download/ltw-release.aar \
+            -o app_pojavlauncher/libs/ltw-release.aar
+
+          test -s app_pojavlauncher/libs/ltw-release.aar
+
+          echo "LTW dosyasi indirildi:"
+          ls -lh app_pojavlauncher/libs/ltw-release.aar
+
       # Gradle izinleri
       - name: Gradlew Yetkisi Ver
         run: chmod +x ./gradlew
@@ -92,5 +106,5 @@ jobs:
         with:
           tag_name: v0.1
           name: enhanced launcher v0.1
-          body: Java 8, 17 ve 21 destekli derleme.
+          body: Java 8, 17 ve 21 destekli LTW ve ANGLE derlemesi.
           files: app_pojavlauncher/build/outputs/apk/debug/*.apk
