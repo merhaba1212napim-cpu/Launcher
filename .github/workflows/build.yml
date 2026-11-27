@@ -1,3 +1,4 @@
+
 name: enhanced launcher v0.1
 
 on:
@@ -12,41 +13,84 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
     steps:
       - name: Kodu Cek
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      # Java 8
+      - name: Java 8 Kur
+        uses: actions/setup-java@v5
+        with:
+          java-version: '8'
+          distribution: temurin
+
+      # Java 17
       - name: Java 17 Kur
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
-          distribution: 'temurin'
+          distribution: temurin
 
+      # Java 21
+      - name: Java 21 Kur
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      # Gradle Java 17 kullanacak
+      - name: Java 17 Aktif Et
+        run: echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+
+      # Android SDK
       - name: Android SDK Kur
         run: |
           mkdir -p "$ANDROID_HOME/cmdline-tools"
           curl -sSL -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
           unzip -q /tmp/cmdline-tools.zip -d "$ANDROID_HOME/cmdline-tools"
           mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
-          export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools"
-          yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses >/dev/null
-          sdkmanager --sdk_root="$ANDROID_HOME" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+
+          yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses >/dev/null
+
+          sdkmanager --sdk_root="$ANDROID_HOME" \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;34.0.0"
+
+      # Gradle izinleri
       - name: Gradlew Yetkisi Ver
         run: chmod +x ./gradlew
 
-      - name: bug lar duzeltildi
-        run: ./gradlew :app_pojavlauncher:assembleDebug
+      # Java sürümlerini Gradle'a tanıt
+      - name: Java Toolchain Ayarla
+        run: |
+          echo "org.gradle.java.installations.paths=$JAVA_HOME_8_X64,$JAVA_HOME_17_X64,$JAVA_HOME_21_X64" >> "$GITHUB_ENV"
 
+      # APK derle
+      - name: PojavLauncher Derle
+        run: |
+          ./gradlew --no-daemon :app_pojavlauncher:assembleDebug
+
+      # APK dosyasını kontrol et
+      - name: APK Kontrol
+        run: |
+          ls -lh app_pojavlauncher/build/outputs/apk/debug/
+          test -f app_pojavlauncher/build/outputs/apk/debug/app_pojavlauncher-debug.apk
+
+      # GitHub Release
       - name: Release Olustur ve APK Yukle
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v0.1
           name: enhanced launcher v0.1
-          body: bug lar duzeltildi
+          body: Java 8, 17 ve 21 destekli derleme.
           files: app_pojavlauncher/build/outputs/apk/debug/*.apk
