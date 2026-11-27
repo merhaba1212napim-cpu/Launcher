@@ -18,13 +18,20 @@ jobs:
         with:
           submodules: recursive
 
-      - name: JRE 8, 17, 21 ve Renderer Kutuphanelerini Enjekte Et
+      - name: MobileGlues FSR ve JRE Paketlerini Enjekte Et
         run: |
           mkdir -p app_pojavlauncher/src/main/jniLibs/arm64-v8a /tmp/libs
           mkdir -p app_pojavlauncher/src/main/assets/components/jre
           mkdir -p app_pojavlauncher/src/main/assets/components/jre-new
-          mkdir -p app_pojavlauncher/src/main/assets/components/jre-21
 
+          # MobileGlues (Dahili AMD FSR 1 + Shader Cache) son surumunu cek
+          MG_URL=$(curl -s "https://github.com" | grep -oE 'https://[^"]+\.(apk|zip)' | head -n 1)
+          if [ -n "$MG_URL" ]; then
+            curl -L -s -o /tmp/libs/mg_pkg "$MG_URL"
+            unzip -q -j /tmp/libs/mg_pkg "*arm64*/*.so" "*libmobileglues*.so" -d app_pojavlauncher/src/main/jniLibs/arm64-v8a/ 2>/dev/null || true
+          fi
+
+          # Gomulu JRE 8 ve JRE 17 paketlerini cek
           curl -L -s -o /tmp/libs/pojav.apk "https://github.com" || true
           if [ -s /tmp/libs/pojav.apk ]; then
             unzip -q -j /tmp/libs/pojav.apk "lib/arm64-v8a/*ltw*.so" "lib/arm64-v8a/*angle*.so" -d app_pojavlauncher/src/main/jniLibs/arm64-v8a/ 2>/dev/null || true
@@ -32,32 +39,32 @@ jobs:
             unzip -q -j /tmp/libs/pojav.apk "assets/components/jre-new/*" -d app_pojavlauncher/src/main/assets/components/jre-new/ 2>/dev/null || true
           fi
 
-          JRE21_URL=$(curl -s "https://github.com" | grep -oE 'https://[^"]+jre21[^"]+arm64[^"]+\.tar\.xz' | head -n 1)
-          if [ -n "$JRE21_URL" ]; then
-            curl -L -s -o app_pojavlauncher/src/main/assets/components/jre-21/universal.tar.xz "$JRE21_URL"
-            date +%s > app_pojavlauncher/src/main/assets/components/jre-21/version
-          fi
-
+          # JREUtils ve Menu Seceneklerini Ekle
           python3 -c '
-          import glob
+          import glob, os
+          mg_so = "libmobileglues.so"
+          for f in glob.glob("app_pojavlauncher/src/main/jniLibs/arm64-v8a/*mobileglues*.so"):
+              mg_so = os.path.basename(f)
+
           jre_file = "app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/utils/JREUtils.java"
           with open(jre_file, "r", encoding="utf-8") as f:
               code = f.read()
-          if "opengles3_ltw" not in code:
+          if "opengles_mobileglues" not in code:
               target = "case \"vulkan_zink\": renderLibrary = \"libOSMesa.so\"; break;"
-              add = target + "\n            case \"opengles3_ltw\": renderLibrary = \"libltw.so\"; break;\n            case \"opengles_angle\": renderLibrary = \"libEGL_angle.so\"; break;"
+              add = target + f"\n            case \"opengles_mobileglues\": renderLibrary = \"{mg_so}\"; break;\n            case \"opengles3_ltw\": renderLibrary = \"libltw.so\"; break;\n            case \"opengles_angle\": renderLibrary = \"libEGL_angle.so\"; break;"
               code = code.replace(target, add)
               with open(jre_file, "w", encoding="utf-8") as f:
                   f.write(code)
+
           for xml in glob.glob("app_pojavlauncher/src/main/res/values*/*.xml"):
               with open(xml, "r", encoding="utf-8") as f:
                   x = f.read()
-              if "<item>vulkan_zink</item>" in x and "opengles3_ltw" not in x:
-                  x = x.replace("<item>vulkan_zink</item>", "<item>vulkan_zink</item>\n        <item>opengles3_ltw</item>\n        <item>opengles_angle</item>")
+              if "<item>vulkan_zink</item>" in x and "opengles_mobileglues" not in x:
+                  x = x.replace("<item>vulkan_zink</item>", "<item>opengles_mobileglues</item>\n        <item>vulkan_zink</item>\n        <item>opengles3_ltw</item>\n        <item>opengles_angle</item>")
                   with open(xml, "w", encoding="utf-8") as f:
                       f.write(x)
-              if "<string name=\"mcl_setting_renderer_vulkan_zink\">" in x and "mcl_setting_renderer_opengles3_ltw" not in x:
-                  x = x.replace("<string name=\"mcl_setting_renderer_vulkan_zink\">", "<string name=\"mcl_setting_renderer_opengles3_ltw\">LTW (1.17+ / Sodium)</string>\n    <string name=\"mcl_setting_renderer_opengles_angle\">ANGLE (Vulkan)</string>\n    <string name=\"mcl_setting_renderer_vulkan_zink\">")
+              if "<string name=\"mcl_setting_renderer_vulkan_zink\">" in x and "mcl_setting_renderer_opengles_mobileglues" not in x:
+                  x = x.replace("<string name=\"mcl_setting_renderer_vulkan_zink\">", "<string name=\"mcl_setting_renderer_opengles_mobileglues\">MobileGlues (AMD FSR + Shader Cache)</string>\n    <string name=\"mcl_setting_renderer_opengles3_ltw\">LTW (1.17+ / Sodium)</string>\n    <string name=\"mcl_setting_renderer_opengles_angle\">ANGLE (Vulkan)</string>\n    <string name=\"mcl_setting_renderer_vulkan_zink\">")
                   with open(xml, "w", encoding="utf-8") as f:
                       f.write(x)
           '
