@@ -1,4 +1,4 @@
-name: PojavLauncher APK Build
+name: enhanced launcher v0.1
 
 on:
   push:
@@ -18,104 +18,25 @@ jobs:
         with:
           submodules: recursive
 
-      - name: MobileGlues FSR, LTW, ANGLE ve JRE Enjekte Et
-        run: |
-          mkdir -p app_pojavlauncher/src/main/jniLibs/arm64-v8a /tmp/libs
-          mkdir -p app_pojavlauncher/src/main/assets/components/jre
-          mkdir -p app_pojavlauncher/src/main/assets/components/jre-new
-          mkdir -p app_pojavlauncher/src/main/assets/components/jre-21
-
-          # MobileGlues (Dahili AMD FSR 1 + Shader Cache) son surumunu cek
-          MG_URL=$(curl -s "https://github.com" | grep -oE 'https://[^"]+\.(apk|zip)' | head -n 1)
-          if [ -n "$MG_URL" ]; then
-            curl -L -s -o /tmp/libs/mg_pkg "$MG_URL"
-            unzip -q -j /tmp/libs/mg_pkg "*arm64*/*.so" "*libmobileglues*.so" -d app_pojavlauncher/src/main/jniLibs/arm64-v8a/ 2>/dev/null || true
-          fi
-
-          # Resmi PojavLauncher Gladiolus APK'sindan LTW, ANGLE ve JRE 8/17 cek
-          curl -L -s -o /tmp/libs/pojav.apk "https://github.com" || true
-          if [ -s /tmp/libs/pojav.apk ]; then
-            unzip -q -j /tmp/libs/pojav.apk "lib/arm64-v8a/*ltw*.so" "lib/arm64-v8a/*angle*.so" -d app_pojavlauncher/src/main/jniLibs/arm64-v8a/ 2>/dev/null || true
-            unzip -q -j /tmp/libs/pojav.apk "assets/components/jre/*" -d app_pojavlauncher/src/main/assets/components/jre/ 2>/dev/null || true
-            unzip -q -j /tmp/libs/pojav.apk "assets/components/jre-new/*" -d app_pojavlauncher/src/main/assets/components/jre-new/ 2>/dev/null || true
-          fi
-
-          # JRE 21 arm64 paketini cek
-          JRE21_URL=$(curl -s "https://github.com" | grep -oE 'https://[^"]+jre21[^"]+arm64[^"]+\.tar\.xz' | head -n 1)
-          if [ -n "$JRE21_URL" ]; then
-            curl -L -s -o app_pojavlauncher/src/main/assets/components/jre-21/universal.tar.xz "$JRE21_URL"
-            date +%s > app_pojavlauncher/src/main/assets/components/jre-21/version
-          fi
-
-          # JREUtils ve Menu Seceneklerini Cakisma Olmadan Ekle
-          python3 -c '
-          import glob, os
-          mg_so = "libmobileglues.so"
-          for f in glob.glob("app_pojavlauncher/src/main/jniLibs/arm64-v8a/*mobileglues*.so"):
-              mg_so = os.path.basename(f)
-
-          jre_file = "app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/utils/JREUtils.java"
-          with open(jre_file, "r", encoding="utf-8") as f:
-              code = f.read()
-
-          target = "case \"vulkan_zink\": renderLibrary = \"libOSMesa.so\"; break;"
-          extra_cases = ""
-          if "\"opengles_mobileglues\"" not in code:
-              extra_cases += f"\n            case \"opengles_mobileglues\": renderLibrary = \"{mg_so}\"; break;"
-          if "\"opengles3_ltw\"" not in code:
-              extra_cases += "\n            case \"opengles3_ltw\": renderLibrary = \"libltw.so\"; break;"
-          if "\"opengles_angle\"" not in code:
-              extra_cases += "\n            case \"opengles_angle\": renderLibrary = \"libEGL_angle.so\"; break;"
-
-          if extra_cases and target in code:
-              code = code.replace(target, target + extra_cases)
-              with open(jre_file, "w", encoding="utf-8") as f:
-                  f.write(code)
-
-          for xml in glob.glob("app_pojavlauncher/src/main/res/values*/*.xml"):
-              with open(xml, "r", encoding="utf-8") as f:
-                  x = f.read()
-              if "<item>vulkan_zink</item>" in x and "opengles_mobileglues" not in x:
-                  items = "<item>opengles_mobileglues</item>\n        <item>vulkan_zink</item>"
-                  if "<item>opengles3_ltw</item>" not in x:
-                      items += "\n        <item>opengles3_ltw</item>"
-                  if "<item>opengles_angle</item>" not in x:
-                      items += "\n        <item>opengles_angle</item>"
-                  x = x.replace("<item>vulkan_zink</item>", items)
-                  with open(xml, "w", encoding="utf-8") as f:
-                      f.write(x)
-              if "<string name=\"mcl_setting_renderer_vulkan_zink\">" in x and "mcl_setting_renderer_opengles_mobileglues" not in x:
-                  strs = "<string name=\"mcl_setting_renderer_opengles_mobileglues\">MobileGlues (AMD FSR + Shader Cache)</string>\n    "
-                  if "mcl_setting_renderer_opengles3_ltw" not in x:
-                      strs += "<string name=\"mcl_setting_renderer_opengles3_ltw\">LTW (1.17+ / Sodium)</string>\n    "
-                  if "mcl_setting_renderer_opengles_angle" not in x:
-                      strs += "<string name=\"mcl_setting_renderer_opengles_angle\">ANGLE (Vulkan)</string>\n    "
-                  x = x.replace("<string name=\"mcl_setting_renderer_vulkan_zink\">", strs + "<string name=\"mcl_setting_renderer_vulkan_zink\">")
-                  with open(xml, "w", encoding="utf-8") as f:
-                      f.write(x)
-          '
-
-      - name: Java 8 Kur
-        uses: actions/setup-java@v4
-        with:
-          java-version: '8'
-          distribution: 'temurin'
-
       - name: Java 17 Kur
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Android SDK Kur
+        uses: android-actions/setup-android@v3
+
       - name: Gradlew Yetkisi Ver
         run: chmod +x ./gradlew
 
-      - name: APK Derle
+      - name: bug lar duzeltildi
         run: ./gradlew :app_pojavlauncher:assembleDebug
 
-      - name: Releases Bolumune Otomatik Yukle
+      - name: Release Olustur ve APK Yukle
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0-${{ github.run_number }}
-          name: PojavLauncher Custom v1.0-${{ github.run_number }}
+          tag_name: v0.1
+          name: enhanced launcher v0.1
+          body: bug lar duzeltildi
           files: app_pojavlauncher/build/outputs/apk/debug/*.apk
