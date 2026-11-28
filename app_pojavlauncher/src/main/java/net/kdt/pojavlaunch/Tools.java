@@ -1393,6 +1393,13 @@ public final class Tools {
             rendererIds.add(rendererId);
             rendererNames.add(defaultRendererNames[i]);
         }
+        // Renderer libraries dropped into jniLibs as libr_<name>.so (see DropInRenderers)
+        if (deviceHasOpenGLES3 && NATIVE_LIB_DIR != null) {
+            for (String name : net.kdt.pojavlaunch.utils.DropInRenderers.namesFrom(new File(NATIVE_LIB_DIR).list())) {
+                rendererIds.add(net.kdt.pojavlaunch.utils.DropInRenderers.idFor(name));
+                rendererNames.add(name + " (özel renderer)");
+            }
+        }
         sCompatibleRenderers = new RenderersList(rendererIds,
                 rendererNames.toArray(new String[0]));
 

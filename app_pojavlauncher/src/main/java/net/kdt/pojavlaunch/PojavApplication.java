@@ -76,6 +76,9 @@ public class PojavApplication extends Application {
 												.concat("/x86");
 			}
 			AsyncAssetManager.unpackRuntime(getAssets());
+			// Install Java runtimes dropped into assets/components/java (see JavaDropIn)
+			final String nativeLibDir = Tools.NATIVE_LIB_DIR;
+			new Thread(() -> net.kdt.pojavlaunch.multirt.JavaDropIn.installMissing(this, nativeLibDir), "java-drop-in").start();
 		} catch (Throwable throwable) {
 			Intent ferrorIntent = new Intent(this, FatalErrorActivity.class);
 			ferrorIntent.putExtra("throwable", throwable);

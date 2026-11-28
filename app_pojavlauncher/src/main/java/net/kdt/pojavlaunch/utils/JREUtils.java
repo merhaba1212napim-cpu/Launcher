@@ -218,6 +218,11 @@ public class JREUtils {
                 envMap.put("LIBGL_ES", "3");
                 envMap.put("POJAVEXEC_EGL", "libltw_custom.so");
             }
+            if(DropInRenderers.libraryFileForId(LOCAL_RENDERER) != null) {
+                // A dropped renderer provides EGL and GL in one library, like libltw_custom.so
+                envMap.put("LIBGL_ES", "3");
+                envMap.put("POJAVEXEC_EGL", NATIVE_LIB_DIR + "/" + DropInRenderers.libraryFileForId(LOCAL_RENDERER));
+            }
             if(LOCAL_RENDERER.equals("opengles3_ltw")) {
                 envMap.put("LIBGL_ES", "3");
                 envMap.put("POJAVEXEC_EGL","libltw.so");
@@ -502,6 +507,10 @@ public class JREUtils {
             case "opengles3_ltw" : renderLibrary = "libltw.so"; break;
             case "opengles3_ltw_custom": renderLibrary = "libltw_custom.so"; break;
             default:
+                if (DropInRenderers.libraryFileForId(LOCAL_RENDERER) != null) {
+                    renderLibrary = DropInRenderers.libraryFileForId(LOCAL_RENDERER);
+                    break;
+                }
                 Log.w("RENDER_LIBRARY", "No renderer selected, defaulting to opengles2");
                 renderLibrary = "libgl4es_114.so";
                 break;
