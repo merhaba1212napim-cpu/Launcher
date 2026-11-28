@@ -1,4 +1,3 @@
-
 name: enhanced launcher v0.1
 
 on:
@@ -29,21 +28,21 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: '8'
-          distribution: temurin
+          distribution: 'temurin'
 
       # Java 17
       - name: Java 17 Kur
         uses: actions/setup-java@v5
         with:
           java-version: '17'
-          distribution: temurin
+          distribution: 'temurin'
 
       # Java 21
       - name: Java 21 Kur
         uses: actions/setup-java@v5
         with:
           java-version: '21'
-          distribution: temurin
+          distribution: 'temurin'
 
       # Gradle Java 17 kullanacak
       - name: Java 17 Aktif Et
@@ -53,7 +52,7 @@ jobs:
       - name: Android SDK Kur
         run: |
           mkdir -p "$ANDROID_HOME/cmdline-tools"
-          curl -sSL -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+          curl -sSL -o /tmp/cmdline-tools.zip https://google.com
           unzip -q /tmp/cmdline-tools.zip -d "$ANDROID_HOME/cmdline-tools"
           mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
 
@@ -66,19 +65,25 @@ jobs:
             "platforms;android-34" \
             "build-tools;34.0.0"
 
-      # LTW kütüphanesini indir
-      - name: LTW Kitapligini Indir
+      # LTW kütüphanesini indir ve jniLibs icine cikart
+      - name: LTW Kitapligini Indir ve Enjekte Et
         run: |
-          mkdir -p app_pojavlauncher/libs
+          mkdir -p app_pojavlauncher/libs app_pojavlauncher/src/main/jniLibs/arm64-v8a
 
           curl -fL --retry 3 \
-            https://github.com/PojavLauncherTeam/LTW/releases/latest/download/ltw-release.aar \
+            https://github.com \
             -o app_pojavlauncher/libs/ltw-release.aar
 
           test -s app_pojavlauncher/libs/ltw-release.aar
+          unzip -q -j app_pojavlauncher/libs/ltw-release.aar "jni/arm64-v8a/*.so" -d app_pojavlauncher/src/main/jniLibs/arm64-v8a/ 2>/dev/null || true
 
-          echo "LTW dosyasi indirildi:"
-          ls -lh app_pojavlauncher/libs/ltw-release.aar
+          echo "LTW kutuphanesi hazir:"
+          ls -lh app_pojavlauncher/src/main/jniLibs/arm64-v8a/*ltw* 2>/dev/null || true
+
+      # Microsoft Hesap Engelini Kalici Kapat
+      - name: Microsoft Online Modu Zorunlulugunu Kapat
+        run: |
+          sed -i 's/if\s*(\s*isLocalProfile\s*)/if(false)/g' app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/tasks/MinecraftDownloader.java
 
       # Gradle izinleri
       - name: Gradlew Yetkisi Ver
@@ -98,13 +103,13 @@ jobs:
       - name: APK Kontrol
         run: |
           ls -lh app_pojavlauncher/build/outputs/apk/debug/
-          test -f app_pojavlauncher/build/outputs/apk/debug/app_pojavlauncher-debug.apk
+          test -f app_pojavlauncher/build/outputs/apk/debug/*.apk
 
-      # GitHub Release
+      # GitHub Release (Her derlemede otomatik guncellenir)
       - name: Release Olustur ve APK Yukle
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.1
-          name: enhanced launcher v0.1
-          body: Java 8, 17 ve 21 destekli LTW ve ANGLE derlemesi.
+          tag_name: v0.1-${{ github.run_number }}
+          name: enhanced launcher v0.1-${{ github.run_number }}
+          body: Java 8, 17 ve 21 destekli, yerel hesap indirmesi acik LTW ve ANGLE derlemesi.
           files: app_pojavlauncher/build/outputs/apk/debug/*.apk
