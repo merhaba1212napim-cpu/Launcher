@@ -40,18 +40,22 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      # LTW kütüphanesini indir ve jniLibs icine cikart
-      - name: LTW Kitapligini Indir ve Enjekte Et
+      # LTW ve ANGLE kütüphanelerini resmi PojavLauncher paketinden cek
+      - name: LTW ve ANGLE Kutuphanelerini Enjekte Et
         run: |
-          mkdir -p app_pojavlauncher/libs app_pojavlauncher/src/main/jniLibs/arm64-v8a
+          rm -rf app_pojavlauncher/libs/*.aar
+          mkdir -p app_pojavlauncher/src/main/jniLibs/arm64-v8a /tmp/libs
 
           curl -fL --retry 3 \
             https://github.com \
-            -o app_pojavlauncher/libs/ltw-release.aar || true
+            -o /tmp/libs/pojav.apk || true
 
-          if [ -s app_pojavlauncher/libs/ltw-release.aar ]; then
-            unzip -q -j app_pojavlauncher/libs/ltw-release.aar "jni/arm64-v8a/*.so" -d app_pojavlauncher/src/main/jniLibs/arm64-v8a/ 2>/dev/null || true
+          if [ -s /tmp/libs/pojav.apk ]; then
+            unzip -q -j /tmp/libs/pojav.apk "lib/arm64-v8a/*ltw*.so" "lib/arm64-v8a/*angle*.so" -d app_pojavlauncher/src/main/jniLibs/arm64-v8a/ 2>/dev/null || true
           fi
+
+          echo "Enjekte edilen kutuphaneler:"
+          ls -lh app_pojavlauncher/src/main/jniLibs/arm64-v8a/
 
       # Microsoft Hesap Engelini Kalici Kapat
       - name: Microsoft Online Modu Zorunlulugunu Kapat
